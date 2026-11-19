@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mamotito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: íntimo y juguetón, una canción hecha solo para ella
+   IDEA: reproductor de bolsillo con un vinilo que asoma detrás de la portada, letra sincronizada al lado
+   PICTURE: portada propia (botas rojas + moñito) y letra gigante que se llena palabra por palabra
+   COLOUR and TYPE: tinta ciruela, coral de acento, lila de apoyo; un aura que cambia con cada parte; Figtree
+   LAYOUT: dos columnas en pantallas grandes; en celular y tablet: portada chica arriba, letra al centro, controles abajo */
+@property --a1{syntax:'<color>';inherits:true;initial-value:#b9a3ff}
+@property --a2{syntax:'<color>';inherits:true;initial-value:#ff7b5c}
+:root{color-scheme:light dark;
+--bg:light-dark(#fbf7f4,#130d16);--ink:light-dark(#1d1320,#f6eef4);--mute:light-dark(#857581,#968a9c);
+--line:light-dark(#ece2e6,#2c2131);--panel:light-dark(#ffffffcc,#1d1523cc);--acc:light-dark(#e04f35,#ff7b5c);
+--a1:#b9a3ff;--a2:#ff7b5c;transition:--a1 1.6s ease,--a2 1.6s ease}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Figtree,system-ui,sans-serif;overflow:hidden}
+.aura{position:fixed;inset:-20%;z-index:0;pointer-events:none;opacity:.2;filter:blur(80px)}
+.aura i{position:absolute;width:46vmax;height:46vmax;border-radius:50%;animation:drift 22s ease-in-out infinite alternate}
+.aura i:nth-child(1){background:var(--a1);left:5%;top:10%}
+.aura i:nth-child(2){background:var(--a2);right:0;bottom:5%;animation-duration:28s;animation-delay:-8s}
+.aura i:nth-child(3){background:color-mix(in srgb,var(--a1) 50%,var(--a2));left:40%;top:45%;width:30vmax;height:30vmax;animation-duration:18s}
+@keyframes drift{to{transform:translate(8vmax,-6vmax) scale(1.15)}}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
+.app{position:relative;z-index:1;display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:clamp(28px,5vw,80px);
+ max-width:1280px;margin:0 auto;height:100dvh;padding:clamp(20px,4vh,48px) max(4vw,20px) 0}
+.head{grid-column:1;grid-row:1}
+.ctl{grid-column:1;grid-row:2;align-self:start;padding-top:16px}
+.ly{position:relative;grid-column:2;grid-row:1/3;overflow-y:auto;scrollbar-width:none;padding:24vh 0 42vh;
+ mask-image:linear-gradient(transparent,#000 15%,#000 78%,transparent)}
+.ly::-webkit-scrollbar{display:none}
+.cover{position:relative;width:min(86%,40vh);aspect-ratio:1}
+.vinyl{position:absolute;inset:3%;border-radius:50%;background:repeating-radial-gradient(circle,#1a1a1d 0 2px,#232327 2px 4px);
+ box-shadow:0 10px 30px -10px #0008;transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.vinyl::after{content:"";position:absolute;inset:34%;border-radius:50%;background:radial-gradient(circle,#130d16 0 9%,var(--a2) 10% 100%)}
+.vinyl .spin{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#fff0,#fff1 10%,#fff0 20%,#fff0 50%,#fff1 60%,#fff0 70%);animation:spin 3.2s linear infinite;animation-play-state:paused}
+.playing .vinyl{transform:translateX(18%)}
+.playing .vinyl .spin{animation-play-state:running}
+@keyframes spin{to{transform:rotate(360deg)}}
+.art{position:relative;width:100%;height:100%;border-radius:14px;display:block;cursor:pointer;
+ box-shadow:0 26px 50px -22px color-mix(in srgb,var(--a2) 70%,transparent);transition:transform .7s cubic-bezier(.2,.8,.2,1),box-shadow 1.6s}
+.app:not(.playing) .art{transform:scale(.94)}
+.meta{display:flex;align-items:center;gap:10px;margin-top:20px}
+.meta>div{flex:1}
+h1{font:800 clamp(22px,2.4vw,28px)/1.1 Figtree,sans-serif;margin:0}
+.by{color:var(--mute);margin:3px 0 0;font-size:15px}
+.anni{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;font-weight:600;color:var(--mute);background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:4px 11px 4px 8px}
+.anni svg{width:14px;height:14px;color:var(--acc)}
+.icon{background:none;border:0;color:var(--ink);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;cursor:pointer;padding:0;transition:transform .15s,background .2s}
+.icon:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.icon:active{transform:scale(.88)}
+.icon svg{width:22px;height:22px}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;font:inherit}
+button:focus-visible,.prog:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.like.on{color:var(--acc)}
+.like.pop svg{animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{40%{transform:scale(1.35)}}
+.prog{position:relative;height:30px;cursor:pointer;display:flex;align-items:center;touch-action:none}
+.rail{position:relative;width:100%;height:4px;border-radius:4px;background:var(--line);transition:height .2s}
+.prog:hover .rail,.prog.drag .rail{height:6px}
+.done{position:absolute;inset:0 auto 0 0;border-radius:4px;background:linear-gradient(90deg,var(--a1),var(--a2))}
+.knob{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%) scale(.8);transition:transform .2s;box-shadow:0 0 0 4px color-mix(in srgb,var(--a2) 25%,transparent)}
+.prog:hover .knob,.prog.drag .knob{transform:translate(-50%,-50%) scale(1.2)}
+.tick{position:absolute;top:-3px;width:3px;height:calc(100% + 6px);border-radius:2px;background:var(--acc);opacity:.5}
+.times{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;margin-top:-3px}
+.btns{display:flex;justify-content:center;align-items:center;gap:clamp(2px,2vw,16px);margin:4px 0 14px}
+.play{width:64px;height:64px;border-radius:50%;border:0;background:var(--ink);color:var(--bg);display:grid;place-items:center;cursor:pointer;flex:none;
+ transition:transform .2s cubic-bezier(.3,1.5,.5,1),box-shadow .4s;box-shadow:0 8px 22px -10px var(--a2)}
+.play:hover{transform:scale(1.06)}.play:active{transform:scale(.92)}
+.play svg{width:26px;height:26px}
+.play path{transition:d .25s}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;backdrop-filter:blur(10px)}
+.nowr{display:flex;align-items:center;gap:10px;min-height:26px}
+.chip{font-weight:800;font-size:14px;white-space:nowrap}
+.chip.sing{color:var(--acc)}
+.pname{color:var(--mute);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.eq{display:flex;align-items:flex-end;gap:2px;height:14px;width:16px;flex:none}
+.eq i{flex:1;background:var(--acc);border-radius:1px;height:30%;animation:eq .9s ease-in-out infinite alternate;animation-play-state:paused}
+.eq i:nth-child(2){animation-delay:-.3s}.eq i:nth-child(3){animation-delay:-.6s}.eq i:nth-child(4){animation-delay:-.15s}
+.playing .eq i{animation-play-state:running}
+@keyframes eq{to{height:100%}}
+.beats{display:flex;gap:5px}
+.beats i{width:7px;height:7px;border-radius:50%;background:var(--line);transition:background .1s,transform .1s}
+.beats i.on{background:var(--acc);transform:scale(1.3)}
+.next{display:flex;align-items:center;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.ring{width:38px;height:38px;flex:none;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:3}
+.nx{flex:1}
+.nx small{display:block;font-size:12px;color:var(--mute)}
+.nx b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nx b.swap{animation:swap .5s ease}
+@keyframes swap{from{opacity:0;transform:translateY(6px)}}
+.cd{font-variant-numeric:tabular-nums;font-weight:800;font-size:14px;white-space:nowrap}
+.cd.sing{color:var(--acc)}
+.sec{font-size:14px;font-weight:600;color:var(--mute);margin:48px 0 12px;display:flex;align-items:center;gap:8px}
+.sec svg{width:16px;height:16px;flex:none}
+.sec.sing{color:var(--acc)}
+.l{font:800 clamp(22px,3vw,34px)/1.36 Figtree,sans-serif;margin:0 0 16px;width:95%;cursor:pointer;opacity:.3;transform-origin:0 50%;user-select:none;-webkit-tap-highlight-color:transparent;overflow-wrap:anywhere;
+ transition:opacity .45s,transform .6s cubic-bezier(.2,.8,.2,1),filter .6s;text-wrap:pretty}
+.l.talk{font-weight:600}
+.l:hover{opacity:.62}
+.l.far{filter:blur(1.2px)}
+.l.past{opacity:.2}
+.l.cur{opacity:1;transform:scale(1.035);filter:none}
+.w{display:inline-block;padding:.14em .05em .18em;margin:-.14em .2em -.18em -.05em;transition:transform .25s cubic-bezier(.3,1.6,.5,1),text-shadow .3s}
+.l.cur .w{background:linear-gradient(90deg,var(--fill) var(--f,0%),var(--dim) var(--f,0%));-webkit-background-clip:text;background-clip:text;color:transparent}
+.l.cur{--dim:color-mix(in srgb,var(--ink) 38%,transparent);--fill:var(--ink)}
+.l.cur.sing{--fill:var(--acc)}
+.l.cur .w.k{transform:translateY(-.09em)}
+.l.cur.sing .w.k{text-shadow:0 0 22px color-mix(in srgb,var(--acc) 55%,transparent)}
+.l.cur.sing .w.hit{animation:hop .32s cubic-bezier(.3,1.7,.5,1)}
+@keyframes hop{40%{transform:translateY(-.22em)}}
+.play.loading svg{opacity:0}
+.play.loading::after{content:"";position:absolute;width:26px;height:26px;border-radius:50%;border:3px solid color-mix(in srgb,var(--bg) 35%,transparent);border-top-color:var(--bg);animation:spin .8s linear infinite}
+.play{position:relative}
+.resync{grid-column:2;grid-row:2;align-self:end;justify-self:center;z-index:3;margin-bottom:28px;display:inline-flex;align-items:center;gap:8px;
+ border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(12px);color:var(--ink);font-weight:800;font-size:14px;min-height:44px;padding:0 18px;border-radius:99px;cursor:pointer;
+ box-shadow:0 10px 24px -12px #0006;opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .3s,transform .4s cubic-bezier(.2,.8,.2,1)}
+.resync.show{opacity:1;transform:none;pointer-events:auto}
+.resync svg{width:16px;height:16px}
+.err{display:none;margin:10px 0 0;font-size:14px;color:var(--acc);font-weight:600}
+.err.show{display:block}
+.foot{color:var(--mute);font-size:13px;margin:16px 0 0;display:flex;align-items:center;gap:6px}
+.foot svg{width:13px;height:13px;color:var(--acc)}
+@media(max-width:959px),(max-height:599px){
+ .app{display:flex;flex-direction:column;height:100dvh;padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left))}
+ .head{display:flex;gap:14px;align-items:center;flex:none;max-width:720px;width:100%;margin:0 auto}
+ .cover{width:clamp(64px,16vw,96px);flex:none}
+ .vinyl,.anni,.foot{display:none}
+ .art{border-radius:10px}
+ .meta{margin:0;flex:1}
+ .ly{order:2;flex:1;min-height:0;padding:14dvh 0 30dvh;width:100%;max-width:720px;margin:0 auto}
+ .resync{position:fixed;left:50%;bottom:calc(var(--ctlh,220px) + 12px);margin:0;transform:translate(-50%,12px)}
+ .resync.show{transform:translate(-50%,0)}
+ .ctl{order:3;flex:none;align-self:stretch;width:100%;max-width:720px;margin:0 auto;padding:4px 0 max(10px,env(safe-area-inset-bottom))}
+ .btns{margin:0 0 8px}
+ .card{padding:9px 12px}.next{margin-top:8px;padding-top:8px}
+ .sec{margin-top:36px}
+}
+@media(max-width:380px){.play{width:56px;height:56px}.icon{width:40px;height:40px}.beats{display:none}}
+@media(max-height:520px) and (orientation:landscape){.cover{display:none}.card{display:none}.by{display:none}.ly{padding:6dvh 0 20dvh}.card .nowr .beats{display:none}.btns{margin:0 0 4px}.head{padding-bottom:2px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<main class="app" id="app">
+ <header class="head">
+  <div class="cover">
+   <div class="vinyl" aria-hidden="true"><div class="spin"></div></div>
+   <svg class="art" id="art" viewBox="0 0 400 400" role="img" aria-label="Portada: unas botas rojas grandes y un moñito">
+    <defs>
+     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9b6ff"/><stop offset=".55" stop-color="#ffa3a3"/><stop offset="1" stop-color="#ff8a5c"/></linearGradient>
+     <linearGradient id="red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff4b4b"/><stop offset="1" stop-color="#c81f33"/></linearGradient>
+     <linearGradient id="red2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d93043"/><stop offset="1" stop-color="#9e1628"/></linearGradient>
+     <symbol id="boot" viewBox="0 0 200 220">
+      <path d="M30 10 H110 Q118 10 118 18 V120 Q120 132 134 136 L176 148 Q196 154 196 176 V190 H22 V18 Q22 10 30 10 Z" fill="currentColor"/>
+      <rect x="18" y="186" width="182" height="22" rx="8" fill="#2b1a22"/>
+      <rect x="18" y="186" width="182" height="6" rx="3" fill="#fff" opacity=".85"/>
+      <path d="M30 10 H110 Q118 10 118 18 V34 H22 V18 Q22 10 30 10 Z" fill="#fff" opacity=".9"/>
+      <g stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".9"><path d="M78 56 l26 8M78 76 l26 8M78 96 l26 8M78 116 l30 10"/></g>
+      <circle cx="58" cy="150" r="13" fill="#fff" opacity=".9"/><path d="M53 150 l4 4 l7 -8" stroke="#c81f33" stroke-width="3" fill="none"/>
+     </symbol>
+    </defs>
+    <rect width="400" height="400" fill="url(#g)"/>
+    <g fill="#fff" opacity=".35"><circle cx="52" cy="62" r="5"/><circle cx="350" cy="230" r="4"/><circle cx="78" cy="250" r="3"/><circle cx="330" cy="330" r="6"/></g>
+    <use href="#boot" x="150" y="118" width="190" height="210" style="color:#a3192c" fill="url(#red2)"/>
+    <g style="color:#e2283c"><use href="#boot" x="58" y="138" width="200" height="220"/></g>
+    <ellipse cx="200" cy="362" rx="150" ry="10" fill="#0002"/>
+    <g transform="translate(300 78) rotate(-12)">
+     <path d="M0 0 C-30 -34 -64 -20 -58 6 C-54 26 -26 22 0 0 Z" fill="#ff5fa2"/>
+     <path d="M0 0 C30 -34 64 -20 58 6 C54 26 26 22 0 0 Z" fill="#ff5fa2"/>
+     <path d="M-6 4 L-22 40 L-8 34 L0 44 Z M6 4 L22 40 L8 34 L0 44 Z" fill="#e8418a"/>
+     <circle r="11" fill="#e8418a"/><circle cx="-3" cy="-3" r="3" fill="#fff8"/>
+    </g>
+    <g transform="translate(70 80) rotate(-10)">
+     <circle r="30" fill="#ffd25e" stroke="#fff" stroke-width="5"/>
+     <path d="M-12 -6 l8 4 l-8 4 M12 -6 l-8 4 l8 4" stroke="#3a2030" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M-12 10 Q0 20 12 10" stroke="#3a2030" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+     <path d="M-2 14 q6 12 12 0" fill="#ff6b8a"/>
+    </g>
+   </svg>
+  </div>
+  <div class="meta">
+   <div>
+    <h1>Mamotito</h1>
+    <p class="by">Toñito · ft. Las Botas Rojas</p>
+    <span class="anni" id="anni"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 8a4.3 4.3 0 0 1 7.5 2.6C19.5 16.4 12 21 12 21z"/></svg><span></span></span>
+   </div>
+   <button class="icon like" id="like" type="button" aria-label="Me gusta" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
+  </div>
+ </header>
+
+ <section class="ctl" aria-label="Reproductor">
+  <div class="prog" id="prog" role="slider" tabindex="0" aria-label="Posición en la canción" aria-valuemin="0" aria-valuenow="0">
+   <div class="rail" id="rail"><div class="done" id="done"></div><div class="knob" id="knob"></div></div>
+  </div>
+  <div class="times"><span id="cur">0:00</span><span id="tot">0:00</span></div>
+  <div class="btns">
+   <button class="icon" id="prevS" type="button" aria-label="Parte anterior"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+   <button class="icon" id="back" type="button" aria-label="Atrás 10 segundos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/><text x="12" y="15.5" font-size="7" text-anchor="middle" fill="currentColor" stroke="none" font-weight="800">10</text></svg></button>
+   <button class="play loading" id="play" type="button" aria-label="Reproducir"><svg viewBox="0 0 24 24" fill="currentColor"><path id="pp" d="M8 5 L8 19 L19 12 L19 12 Z"/></svg></button>
+   <button class="icon" id="fwd" type="button" aria-label="Adelantar 10 segundos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12a8 8 0 1 1-3-6.2M20 4v4h-4"/><text x="12" y="15.5" font-size="7" text-anchor="middle" fill="currentColor" stroke="none" font-weight="800">10</text></svg></button>
+   <button class="icon" id="nextS" type="button" aria-label="Parte siguiente"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+  </div>
+  <div class="card">
+   <div class="nowr"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="chip" id="chip">Hablado</span><span class="pname" id="pname">Intro</span><span class="beats" aria-hidden="true" title="Ritmo"><i></i><i></i><i></i><i></i></span></div>
+   <div class="next">
+    <svg class="ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" stroke="var(--line)"/><circle id="ringc" cx="20" cy="20" r="16" stroke="var(--acc)" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="100.5"/></svg>
+    <div class="nx"><small>A continuación</small><b id="nxname">—</b></div>
+    <span class="cd" id="cd"></span>
+   </div>
+  </div>
+  <p class="err" id="err" role="alert">No se pudo cargar la música. Revisa tu conexión y recarga la página.</p>
+  <p class="foot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 8a4.3 4.3 0 0 1 7.5 2.6C19.5 16.4 12 21 12 21z"/></svg>Hecha con cariño por tu toñito. Toca una línea para saltar ahí.</p>
+ </section>
+
+ <section class="ly" id="ly" aria-label="Letra"></section>
+ <button class="resync" id="resync" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>Volver a la letra</button>
+</main>
+<audio id="aud" preload="auto"></audio>
+
+<script>
+{
+const D={"beat": 0.6, "total": 290.1, "sections": [{"name": "Intro", "kind": "intro", "t": 0.0, "lines": [{"s": 0.6, "e": 4.6, "txt": "(hablado) Oe, oe… ¿ya está grabando? Ya, ya, no te rías."}, {"s": 4.8, "e": 9.4, "txt": "Mamotito, esto es para ti. Ponte cómoda… y no me hagas caras, ¿ya?"}]}, {"name": "El nuevo del salón", "kind": "talk", "t": 9.6, "lines": [{"s": 9.6, "e": 14.4, "txt": "Todo empezó en cuarto de secundaria. Yo, el nuevo del salón, sin conocer a nadie."}, {"s": 14.4, "e": 19.2, "txt": "Y tú fuiste la primera en hablarme: llegaste con tu amiga, toda segura."}, {"s": 19.2, "e": 24.0, "txt": "Yo, con mi tablet… porque no tenía celular. Sí, mi amor: tablet. En el colegio."}, {"s": 24.0, "e": 28.8, "txt": "Y con mis botas rojas gigantes, que se veían desde la luna. Un estilazo."}, {"s": 28.8, "e": 33.6, "txt": "Tú, arregladita, con tu moñito… y yo pensé: “¿qué hace hablándome a mí?”"}]}, {"name": "♪ Tu moñito", "kind": "sing", "t": 33.6, "lines": [{"s": 33.6, "e": 38.4, "txt": "Con tu moñito y tu carita,"}, {"s": 38.4, "e": 43.2, "txt": "me miraste y quedé bobito,"}, {"s": 43.2, "e": 48.0, "txt": "yo con mis botas rojas gigantes,"}, {"s": 48.0, "e": 52.8, "txt": "y tú la chica más elegante."}]}, {"name": "El plan maestro", "kind": "talk", "t": 52.8, "lines": [{"s": 52.8, "e": 57.6, "txt": "La primera salida fue en casa de tu amiga: tú con ella, yo con mi pata del colegio."}, {"s": 57.6, "e": 62.4, "txt": "Un dos pa’ dos, bien organizado… como partido de fulbito."}, {"s": 62.4, "e": 67.2, "txt": "Y ahí me tenía que declarar. Pero yo ya tenía un plan maestro."}, {"s": 67.2, "e": 72.0, "txt": "Me tomé unos tragos antes… pa’ que si me rechazabas, decir “estaba borracho, no me acuerdo”."}, {"s": 72.0, "e": 76.8, "txt": "Spoiler: no estaba borracho. Estaba más sano que agua de mesa. Pura estrategia."}, {"s": 76.8, "e": 81.6, "txt": "Y me dijiste que sí… y ahí sí casi me desmayo. Pero de verdad."}]}, {"name": "♪ Borracho de amor", "kind": "sing", "t": 81.6, "lines": [{"s": 81.6, "e": 86.4, "txt": "No estaba borracho, estaba enamorado,"}, {"s": 86.4, "e": 91.2, "txt": "tu “sí” me dejó más mareado."}]}, {"name": "♪ Mamotito", "kind": "sing", "t": 91.2, "lines": [{"s": 91.2, "e": 96.0, "txt": "Mamotito, mi mamotito,"}, {"s": 96.0, "e": 100.8, "txt": "haces caras y me derrito,"}, {"s": 100.8, "e": 105.6, "txt": "aunque te enojes por todito,"}, {"s": 105.6, "e": 110.4, "txt": "yo me quedo aquí, bonito."}]}, {"name": "Tus mañas", "kind": "talk", "t": 110.4, "lines": [{"s": 110.4, "e": 115.2, "txt": "Ahora hablemos de tus mañas, ¿ya? Porque alguien tiene que decirlo."}, {"s": 115.2, "e": 120.0, "txt": "Te enojas por todo: porque respiro, porque no respiro, porque respiré bonito."}, {"s": 120.0, "e": 124.8, "txt": "Y cuando te enojas me haces unas caras… que ni en los memes he visto."}, {"s": 124.8, "e": 129.6, "txt": "Y después me mandas stickers… ¡de mi propia cara! Tienes una fábrica, mamotito."}]}, {"name": "♪ Stickers", "kind": "sing", "t": 129.6, "lines": [{"s": 129.6, "e": 134.4, "txt": "Me haces stickers con mi cara fea,"}, {"s": 134.4, "e": 139.2, "txt": "y medio Perú ya me memea."}]}, {"name": "Tus frases", "kind": "talk", "t": 139.2, "lines": [{"s": 139.2, "e": 144.0, "txt": "Y tus frases, mi amor… “oe, candelo”, “no seas cachalambroso”."}, {"s": 144.0, "e": 148.8, "txt": "“¡Mucha cochinada!”, “¡chupahueso!”… pareces diccionario de la calle."}, {"s": 148.8, "e": 153.6, "txt": "Si alguien nos escucha, piensa que hablamos en clave. Y sí: hablamos en clave."}]}, {"name": "De noche y de mañana", "kind": "talk", "t": 153.6, "lines": [{"s": 153.6, "e": 158.4, "txt": "Y de noche… roncas. “Poquito”, dices tú. ¿Poquito? ¡Suenas como combi en subida!"}, {"s": 158.4, "e": 163.2, "txt": "Y algo que nunca te he dicho en serio, pero hoy sí: cuando te despiertas…"}, {"s": 163.2, "e": 168.0, "txt": "…pareces bruja. Bruja bonita, ¿ah? Pero bruja."}]}, {"name": "♪ Brujita", "kind": "sing", "t": 168.0, "lines": [{"s": 168.0, "e": 172.8, "txt": "Brujita, brujita de mi corazón,"}, {"s": 172.8, "e": 177.6, "txt": "despiertas y asustas al callejón,"}, {"s": 177.6, "e": 182.4, "txt": "pelos parados, cara de malhumor,"}, {"s": 182.4, "e": 187.2, "txt": "pero eres mi bruja, mi amor."}]}, {"name": "Mis mañas", "kind": "talk", "t": 187.2, "lines": [{"s": 187.2, "e": 192.0, "txt": "Ya, ya, yo también tengo lo mío. Dices que paro pegado a la compu."}, {"s": 192.0, "e": 196.8, "txt": "Que desaparezco sin avisar… pero es que estoy viendo carros deportivos y cuartos en alquiler."}, {"s": 196.8, "e": 201.6, "txt": "Y cuando te digo “me voy de fiesta”… ahí sí, se acabó el mundo."}, {"s": 201.6, "e": 206.4, "txt": "Me miras con una cara… que ni el diablo se atreve a ir de fiesta."}]}, {"name": "Pausa", "kind": "break", "t": 206.4, "lines": [{"s": 206.4, "e": 211.2, "txt": "(silencio)… ¿Fiesta? ¿Qué fiesta? Yo no dije nada. Me quedo en mi casa."}]}, {"name": "♪ Comas – San Martín", "kind": "sing", "t": 211.2, "lines": [{"s": 211.2, "e": 216.0, "txt": "Desde Comas hasta San Martín,"}, {"s": 216.0, "e": 220.8, "txt": "cruzo media Lima solo por ti,"}, {"s": 220.8, "e": 225.6, "txt": "aunque la chamba nos tenga ocupados,"}, {"s": 225.6, "e": 230.4, "txt": "te veo un ratito y quedo enamorado."}]}, {"name": "Ya, en serio", "kind": "soft", "t": 230.4, "lines": [{"s": 230.4, "e": 235.2, "txt": "Ya… ahora en serio. Un ratito en serio, ¿ya? No me hagas caras."}, {"s": 235.2, "e": 240.0, "txt": "Lo más bonito de mi día es cuando nos decimos “buenos días”."}, {"s": 240.0, "e": 244.8, "txt": "Tú me entiendes, incluso cuando ni yo me entiendo."}, {"s": 244.8, "e": 249.6, "txt": "Como en “Up”, quiero llenar una casa de globos y viajar contigo a todos lados."}, {"s": 249.6, "e": 254.4, "txt": "Comprar ese carro deportivo, vivir juntos, volvernos millonarios… y tú de copiloto."}]}, {"name": "♪ Mamotito (final)", "kind": "sing", "t": 254.4, "lines": [{"s": 254.4, "e": 259.2, "txt": "Mamotito, mi mamotito,"}, {"s": 259.2, "e": 264.0, "txt": "tres añitos y más bonito,"}, {"s": 264.0, "e": 268.8, "txt": "el dos de octubre lo llevo presente,"}, {"s": 268.8, "e": 273.6, "txt": "yo me quedo aquí, contigo."}]}, {"name": "Final", "kind": "outro", "t": 273.6, "lines": [{"s": 274.0, "e": 279.2, "txt": "(hablado) Ya… eso fue todo, mamotito. No seas cachalambroso y dime que te gustó."}, {"s": 279.4, "e": 285.1, "txt": "Atentamente: tu toñito. El de las botas rojas. ¡Chau! 💛"}]}], "notes": [{"m": 64, "s": 33.9, "e": 34.2}, {"m": 67, "s": 34.2, "e": 34.5}, {"m": 67, "s": 34.5, "e": 34.8}, {"m": 69, "s": 34.8, "e": 35.1}, {"m": 67, "s": 35.1, "e": 35.4}, {"m": 64, "s": 35.4, "e": 36.0}, {"m": 69, "s": 36.0, "e": 36.3}, {"m": 69, "s": 36.3, "e": 36.6}, {"m": 72, "s": 36.6, "e": 36.9}, {"m": 69, "s": 36.9, "e": 37.2}, {"m": 67, "s": 37.2, "e": 38.4}, {"m": 65, "s": 38.7, "e": 39.0}, {"m": 69, "s": 39.0, "e": 39.3}, {"m": 69, "s": 39.3, "e": 39.6}, {"m": 72, "s": 39.6, "e": 39.9}, {"m": 69, "s": 39.9, "e": 40.2}, {"m": 67, "s": 40.2, "e": 40.8}, {"m": 67, "s": 40.8, "e": 41.1}, {"m": 65, "s": 41.1, "e": 41.4}, {"m": 64, "s": 41.4, "e": 41.7}, {"m": 62, "s": 41.7, "e": 42.0}, {"m": 67, "s": 42.0, "e": 43.2}, {"m": 64, "s": 43.5, "e": 43.8}, {"m": 67, "s": 43.8, "e": 44.1}, {"m": 67, "s": 44.1, "e": 44.4}, {"m": 69, "s": 44.4, "e": 44.7}, {"m": 67, "s": 44.7, "e": 45.0}, {"m": 72, "s": 45.0, "e": 45.6}, {"m": 72, "s": 45.6, "e": 45.9}, {"m": 74, "s": 45.9, "e": 46.2}, {"m": 72, "s": 46.2, "e": 46.5}, {"m": 69, "s": 46.5, "e": 46.8}, {"m": 69, "s": 46.8, "e": 48.0}, {"m": 65, "s": 48.3, "e": 48.6}, {"m": 69, "s": 48.6, "e": 48.9}, {"m": 72, "s": 48.9, "e": 49.2}, {"m": 74, "s": 49.2, "e": 49.8}, {"m": 72, "s": 49.8, "e": 50.4}, {"m": 71, "s": 50.4, "e": 50.7}, {"m": 72, "s": 50.7, "e": 51.0}, {"m": 74, "s": 51.0, "e": 51.3}, {"m": 71, "s": 51.3, "e": 51.6}, {"m": 67, "s": 51.6, "e": 52.8}, {"m": 69, "s": 81.6, "e": 81.9}, {"m": 69, "s": 81.9, "e": 82.2}, {"m": 69, "s": 82.2, "e": 82.5}, {"m": 71, "s": 82.5, "e": 82.8}, {"m": 72, "s": 82.8, "e": 83.4}, {"m": 71, "s": 83.4, "e": 83.7}, {"m": 69, "s": 83.7, "e": 84.0}, {"m": 65, "s": 84.0, "e": 84.3}, {"m": 65, "s": 84.3, "e": 84.6}, {"m": 65, "s": 84.6, "e": 84.9}, {"m": 67, "s": 84.9, "e": 85.2}, {"m": 69, "s": 85.2, "e": 86.4}, {"m": 67, "s": 86.4, "e": 86.7}, {"m": 67, "s": 86.7, "e": 87.0}, {"m": 67, "s": 87.0, "e": 87.3}, {"m": 69, "s": 87.3, "e": 87.6}, {"m": 71, "s": 87.6, "e": 88.2}, {"m": 72, "s": 88.2, "e": 88.5}, {"m": 74, "s": 88.5, "e": 88.8}, {"m": 72, "s": 88.8, "e": 89.4}, {"m": 67, "s": 89.4, "e": 90.0}, {"m": 72, "s": 90.0, "e": 91.2}, {"m": 72, "s": 91.2, "e": 91.65}, {"m": 72, "s": 91.65, "e": 91.8}, {"m": 72, "s": 91.8, "e": 92.1}, {"m": 74, "s": 92.1, "e": 92.4}, {"m": 72, "s": 92.4, "e": 93.0}, {"m": 69, "s": 93.0, "e": 93.6}, {"m": 71, "s": 93.6, "e": 94.05}, {"m": 71, "s": 94.05, "e": 94.2}, {"m": 71, "s": 94.2, "e": 94.5}, {"m": 72, "s": 94.5, "e": 94.8}, {"m": 74, "s": 94.8, "e": 96.0}, {"m": 71, "s": 96.0, "e": 96.3}, {"m": 71, "s": 96.3, "e": 96.6}, {"m": 72, "s": 96.6, "e": 96.9}, {"m": 74, "s": 96.9, "e": 97.2}, {"m": 76, "s": 97.2, "e": 97.8}, {"m": 74, "s": 97.8, "e": 98.1}, {"m": 72, "s": 98.1, "e": 98.4}, {"m": 72, "s": 98.4, "e": 99.6}, {"m": 69, "s": 99.6, "e": 100.2}, {"m": 72, "s": 100.8, "e": 101.25}, {"m": 72, "s": 101.25, "e": 101.4}, {"m": 72, "s": 101.4, "e": 101.7}, {"m": 74, "s": 101.7, "e": 102.0}, {"m": 72, "s": 102.0, "e": 102.6}, {"m": 69, "s": 102.6, "e": 103.2}, {"m": 71, "s": 103.2, "e": 103.65}, {"m": 71, "s": 103.65, "e": 103.8}, {"m": 71, "s": 103.8, "e": 104.1}, {"m": 72, "s": 104.1, "e": 104.4}, {"m": 74, "s": 104.4, "e": 105.0}, {"m": 77, "s": 105.0, "e": 105.6}, {"m": 76, "s": 105.6, "e": 105.9}, {"m": 76, "s": 105.9, "e": 106.2}, {"m": 74, "s": 106.2, "e": 106.5}, {"m": 72, "s": 106.5, "e": 106.8}, {"m": 74, "s": 106.8, "e": 107.1}, {"m": 72, "s": 107.1, "e": 107.4}, {"m": 71, "s": 107.4, "e": 107.7}, {"m": 74, "s": 107.7, "e": 108.0}, {"m": 72, "s": 108.0, "e": 109.8}, {"m": 72, "s": 129.6, "e": 129.9}, {"m": 72, "s": 130.2, "e": 130.5}, {"m": 71, "s": 130.8, "e": 131.1}, {"m": 72, "s": 131.1, "e": 131.4}, {"m": 74, "s": 131.4, "e": 132.0}, {"m": 71, "s": 132.0, "e": 132.3}, {"m": 71, "s": 132.6, "e": 132.9}, {"m": 69, "s": 133.2, "e": 133.5}, {"m": 71, "s": 133.5, "e": 133.8}, {"m": 67, "s": 133.8, "e": 134.4}, {"m": 69, "s": 134.4, "e": 134.7}, {"m": 69, "s": 135.0, "e": 135.3}, {"m": 67, "s": 135.6, "e": 135.9}, {"m": 69, "s": 135.9, "e": 136.2}, {"m": 72, "s": 136.2, "e": 136.8}, {"m": 74, "s": 136.8, "e": 137.1}, {"m": 72, "s": 137.1, "e": 137.4}, {"m": 71, "s": 137.4, "e": 137.7}, {"m": 74, "s": 137.7, "e": 138.0}, {"m": 79, "s": 138.0, "e": 139.2}, {"m": 69, "s": 168.0, "e": 168.6}, {"m": 72, "s": 168.6, "e": 168.9}, {"m": 69, "s": 168.9, "e": 169.2}, {"m": 76, "s": 169.2, "e": 169.8}, {"m": 75, "s": 169.8, "e": 170.1}, {"m": 76, "s": 170.1, "e": 170.4}, {"m": 74, "s": 170.4, "e": 171.0}, {"m": 72, "s": 171.0, "e": 171.3}, {"m": 74, "s": 171.3, "e": 171.6}, {"m": 77, "s": 171.6, "e": 172.8}, {"m": 76, "s": 172.8, "e": 173.1}, {"m": 75, "s": 173.1, "e": 173.4}, {"m": 76, "s": 173.4, "e": 173.7}, {"m": 72, "s": 173.7, "e": 174.0}, {"m": 71, "s": 174.0, "e": 174.3}, {"m": 72, "s": 174.3, "e": 174.6}, {"m": 68, "s": 174.6, "e": 175.2}, {"m": 69, "s": 175.2, "e": 175.5}, {"m": 69, "s": 175.5, "e": 175.8}, {"m": 71, "s": 175.8, "e": 176.1}, {"m": 72, "s": 176.1, "e": 176.4}, {"m": 69, "s": 176.4, "e": 177.6}, {"m": 69, "s": 177.6, "e": 178.2}, {"m": 72, "s": 178.2, "e": 178.5}, {"m": 69, "s": 178.5, "e": 178.8}, {"m": 76, "s": 178.8, "e": 179.4}, {"m": 75, "s": 179.4, "e": 179.7}, {"m": 76, "s": 179.7, "e": 180.0}, {"m": 74, "s": 180.0, "e": 180.6}, {"m": 72, "s": 180.6, "e": 180.9}, {"m": 74, "s": 180.9, "e": 181.2}, {"m": 77, "s": 181.2, "e": 182.4}, {"m": 76, "s": 182.4, "e": 182.7}, {"m": 77, "s": 182.7, "e": 183.0}, {"m": 76, "s": 183.0, "e": 183.3}, {"m": 74, "s": 183.3, "e": 183.6}, {"m": 72, "s": 183.6, "e": 183.9}, {"m": 71, "s": 183.9, "e": 184.2}, {"m": 68, "s": 184.2, "e": 184.8}, {"m": 71, "s": 184.8, "e": 185.4}, {"m": 68, "s": 185.4, "e": 186.0}, {"m": 64, "s": 186.0, "e": 187.2}, {"m": 64, "s": 211.2, "e": 211.5}, {"m": 65, "s": 211.5, "e": 211.8}, {"m": 67, "s": 211.8, "e": 212.1}, {"m": 67, "s": 212.1, "e": 212.4}, {"m": 67, "s": 212.4, "e": 212.7}, {"m": 69, "s": 212.7, "e": 213.0}, {"m": 67, "s": 213.0, "e": 213.6}, {"m": 67, "s": 213.6, "e": 213.9}, {"m": 65, "s": 213.9, "e": 214.2}, {"m": 64, "s": 214.2, "e": 214.5}, {"m": 62, "s": 214.5, "e": 214.8}, {"m": 62, "s": 214.8, "e": 216.0}, {"m": 64, "s": 216.0, "e": 216.3}, {"m": 65, "s": 216.3, "e": 216.6}, {"m": 67, "s": 216.6, "e": 216.9}, {"m": 67, "s": 216.9, "e": 217.2}, {"m": 69, "s": 217.2, "e": 217.5}, {"m": 72, "s": 217.5, "e": 217.8}, {"m": 72, "s": 217.8, "e": 218.4}, {"m": 72, "s": 218.4, "e": 218.7}, {"m": 69, "s": 218.7, "e": 219.0}, {"m": 67, "s": 219.0, "e": 219.3}, {"m": 65, "s": 219.3, "e": 219.6}, {"m": 65, "s": 219.6, "e": 220.8}, {"m": 72, "s": 220.8, "e": 221.1}, {"m": 72, "s": 221.1, "e": 221.4}, {"m": 72, "s": 221.4, "e": 221.7}, {"m": 74, "s": 221.7, "e": 222.0}, {"m": 76, "s": 222.0, "e": 222.6}, {"m": 72, "s": 222.6, "e": 223.2}, {"m": 74, "s": 223.2, "e": 223.5}, {"m": 74, "s": 223.5, "e": 223.8}, {"m": 74, "s": 223.8, "e": 224.1}, {"m": 72, "s": 224.1, "e": 224.4}, {"m": 71, "s": 224.4, "e": 225.6}, {"m": 69, "s": 225.6, "e": 225.9}, {"m": 72, "s": 225.9, "e": 226.2}, {"m": 72, "s": 226.2, "e": 226.5}, {"m": 69, "s": 226.5, "e": 226.8}, {"m": 72, "s": 226.8, "e": 227.4}, {"m": 74, "s": 227.4, "e": 228.0}, {"m": 74, "s": 228.0, "e": 228.6}, {"m": 76, "s": 228.6, "e": 229.2}, {"m": 79, "s": 229.2, "e": 230.4}, {"m": 74, "s": 254.4, "e": 254.85}, {"m": 74, "s": 254.85, "e": 255.0}, {"m": 74, "s": 255.0, "e": 255.3}, {"m": 76, "s": 255.3, "e": 255.6}, {"m": 74, "s": 255.6, "e": 256.2}, {"m": 71, "s": 256.2, "e": 256.8}, {"m": 73, "s": 256.8, "e": 257.25}, {"m": 73, "s": 257.25, "e": 257.4}, {"m": 73, "s": 257.4, "e": 257.7}, {"m": 74, "s": 257.7, "e": 258.0}, {"m": 76, "s": 258.0, "e": 259.2}, {"m": 73, "s": 259.2, "e": 259.5}, {"m": 73, "s": 259.5, "e": 259.8}, {"m": 74, "s": 259.8, "e": 260.1}, {"m": 76, "s": 260.1, "e": 260.4}, {"m": 78, "s": 260.4, "e": 261.0}, {"m": 76, "s": 261.0, "e": 261.3}, {"m": 74, "s": 261.3, "e": 261.6}, {"m": 74, "s": 261.6, "e": 262.8}, {"m": 71, "s": 262.8, "e": 263.4}, {"m": 74, "s": 264.0, "e": 264.45}, {"m": 74, "s": 264.45, "e": 264.6}, {"m": 74, "s": 264.6, "e": 264.9}, {"m": 76, "s": 264.9, "e": 265.2}, {"m": 74, "s": 265.2, "e": 265.8}, {"m": 71, "s": 265.8, "e": 266.4}, {"m": 73, "s": 266.4, "e": 266.85}, {"m": 73, "s": 266.85, "e": 267.0}, {"m": 73, "s": 267.0, "e": 267.3}, {"m": 74, "s": 267.3, "e": 267.6}, {"m": 76, "s": 267.6, "e": 268.2}, {"m": 79, "s": 268.2, "e": 268.8}, {"m": 78, "s": 268.8, "e": 269.1}, {"m": 78, "s": 269.1, "e": 269.4}, {"m": 76, "s": 269.4, "e": 269.7}, {"m": 74, "s": 269.7, "e": 270.0}, {"m": 76, "s": 270.0, "e": 270.3}, {"m": 74, "s": 270.3, "e": 270.6}, {"m": 73, "s": 270.6, "e": 270.9}, {"m": 76, "s": 270.9, "e": 271.2}, {"m": 74, "s": 271.2, "e": 273.0}]};
+const $=id=>document.getElementById(id);
+const aud=$('aud'),ly=$('ly'),app=$('app'),END=D.total;
+let fellBack=false;
+fetch('cancion.mp3').then(r=>{if(!r.ok)throw 0;return r.blob()}).then(b=>{aud.src=URL.createObjectURL(b)}).catch(()=>{fellBack=true;aud.src='cancion.mp3'});
+const playBtn=document.getElementById('play');
+const busy=b=>playBtn.classList.toggle('loading',b);
+aud.addEventListener('canplay',()=>busy(false));
+aud.addEventListener('waiting',()=>busy(true));
+aud.addEventListener('playing',()=>busy(false));
+aud.addEventListener('error',()=>{if(!fellBack&&aud.src.startsWith('blob:')){fellBack=true;aud.src='cancion.mp3';return}busy(false);document.getElementById('err').classList.add('show')});
+const fmt=s=>{s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const syl=w=>Math.max(1,(w.match(/[aeiouáéíóúü]+/gi)||[]).length);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+$('tot').textContent=fmt(END);$('prog').setAttribute('aria-valuemax',Math.round(END));
+
+// aniversario
+{const now=new Date();let a=new Date(now.getFullYear(),9,2);if(now>a&&now.toDateString()!==a.toDateString())a=new Date(now.getFullYear()+1,9,2);
+ const d=Math.ceil((a-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5);
+ $('anni').querySelector('span').textContent=d===0?'¡Hoy es nuestro aniversario!':`2 de octubre · faltan ${d} días`}
+
+const AURA={talk:['#b9a3ff','#ff9a7a'],intro:['#b9a3ff','#ffb38a'],sing:['#ff7b5c','#ff5fa2'],soft:['#ffb38a','#ffd27a'],break:['#8a8aa0','#b9a3ff'],outro:['#ff9a7a','#b9a3ff'],witch:['#8b5cf6','#3ddc97']};
+const ICON={sing:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 17.5V6l11-2v11.5a2.5 2.5 0 1 1-2-2.45V7.4l-7 1.27v8.83A2.5 2.5 0 1 1 9 17.5z"/></svg>',
+ talk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v10H9l-5 4z"/></svg>'};
+
+const lines=[];
+D.sections.forEach((s,si)=>s.lines.forEach(L=>{L.si=si;L.sing=s.kind==='sing';lines.push(L)}));
+lines.forEach(L=>{
+ const ws=L.txt.split(/\s+/).filter(Boolean),sy=ws.map(syl),tot=sy.reduce((a,b)=>a+b,0);
+ if(L.sing){
+  const ns=D.notes.filter(n=>n.s>=L.s-.01&&n.s<L.e-.01);let acc=0;
+  L.w=ws.map((w,i)=>{const a=ns[Math.min(ns.length-1,Math.floor(acc/tot*ns.length))];acc+=sy[i];
+   const b=ns[Math.min(ns.length-1,Math.max(0,Math.ceil(acc/tot*ns.length)-1))];return{txt:w,s:a.s,e:Math.max(b.e,a.s+.2)}});
+ }else{
+  let t=L.s+.15;const dur=(L.e-L.s)*.88;
+  L.w=ws.map((w,i)=>{const d=sy[i]/tot*dur,o={txt:w,s:t,e:t+d};t+=d;return o});
+ }
+});
+
+ly.innerHTML=D.sections.map(s=>{const sing=s.kind==='sing';
+ return `<div class="sec${sing?' sing':''}">${ICON[sing?'sing':'talk']}${sing?'Cantado':'Hablado'} · ${s.name.replace('♪ ','')}</div>`+
+ s.lines.map(L=>`<p class="l ${sing?'sing':'talk'}" data-i="${lines.indexOf(L)}">${L.w.map(w=>`<span class="w">${w.txt}</span>`).join('')}</p>`).join('')}).join('');
+const P=[...ly.querySelectorAll('.l')];
+let userScroll=-1e9;
+P.forEach(p=>p.addEventListener('click',()=>{aud.currentTime=Math.max(0,lines[+p.dataset.i].s-.4);userScroll=-1e9;play()}));
+const HOLD=5000;
+const mark=()=>{userScroll=performance.now()};
+ly.addEventListener('wheel',mark,{passive:true});ly.addEventListener('touchmove',mark,{passive:true});
+ly.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','PageUp','PageDown'].includes(e.key))mark()});
+const resync=$('resync');
+const toCurrent=()=>{const i=lastLine>=0?lastLine:lines.findIndex(L=>L.s>aud.currentTime);const el=P[i<0?P.length-1:i];
+ if(el)ly.scrollTo({top:el.offsetTop-ly.clientHeight*.36,behavior:reduce?'auto':'smooth'})};
+resync.addEventListener('click',()=>{userScroll=-1e9;toCurrent()});
+const ctlEl=document.querySelector('.ctl');
+const ro2=new ResizeObserver(()=>document.documentElement.style.setProperty('--ctlh',ctlEl.offsetHeight+'px'));ro2.observe(ctlEl);
+$('rail').insertAdjacentHTML('beforeend',D.sections.filter(s=>s.kind==='sing').map(s=>`<span class="tick" style="left:${s.t/END*100}%"></span>`).join(''));
+
+const PLAY='M8 5 L8 19 L19 12 L19 12 Z',PAUSE='M7 5 L7 19 L17 19 L17 5 Z';
+const setPlaying=p=>{app.classList.toggle('playing',p);$('pp').setAttribute('d',p?'M7 5 L7 19 L10.5 19 L10.5 5 Z M13.5 5 L13.5 19 L17 19 L17 5 Z':PLAY);$('play').setAttribute('aria-label',p?'Pausa':'Reproducir')};
+function play(){const r=aud.play();if(r)r.catch(()=>{})}
+const toggle=()=>aud.paused?play():aud.pause();
+$('play').addEventListener('click',toggle);$('art').addEventListener('click',toggle);
+aud.addEventListener('play',()=>setPlaying(true));aud.addEventListener('pause',()=>setPlaying(false));
+aud.addEventListener('ended',()=>{setPlaying(false);userScroll=-1e9});
+if('mediaSession' in navigator){try{
+ navigator.mediaSession.metadata=new MediaMetadata({title:'Mamotito',artist:'Toñito ft. Las Botas Rojas',album:'Para ti'});
+ navigator.mediaSession.setActionHandler('play',play);navigator.mediaSession.setActionHandler('pause',()=>aud.pause());
+ navigator.mediaSession.setActionHandler('seekbackward',()=>{aud.currentTime=Math.max(0,aud.currentTime-10)});
+ navigator.mediaSession.setActionHandler('seekforward',()=>{aud.currentTime=Math.min(END,aud.currentTime+10)});
+}catch(e){}}
+$('back').addEventListener('click',()=>{aud.currentTime=Math.max(0,aud.currentTime-10)});
+$('fwd').addEventListener('click',()=>{aud.currentTime=Math.min(END,aud.currentTime+10)});
+const secIdx=t=>{let k=0;D.sections.forEach((s,i)=>{if(t>=s.t)k=i});return k};
+$('prevS').addEventListener('click',()=>{const t=aud.currentTime,k=secIdx(t);aud.currentTime=t-D.sections[k].t>2?D.sections[k].t:D.sections[Math.max(0,k-1)].t;userScroll=-1e9});
+$('nextS').addEventListener('click',()=>{const k=secIdx(aud.currentTime);if(k<D.sections.length-1){aud.currentTime=D.sections[k+1].t;userScroll=-1e9}});
+document.addEventListener('keydown',e=>{
+ if(e.code==='Space'&&e.target.tagName!=='BUTTON'){e.preventDefault();toggle()}
+ else if(e.target===document.body&&e.key==='ArrowRight'){aud.currentTime=Math.min(END,aud.currentTime+5)}
+ else if(e.target===document.body&&e.key==='ArrowLeft'){aud.currentTime=Math.max(0,aud.currentTime-5)}});
+
+const prog=$('prog');
+const seek=e=>{const r=$('rail').getBoundingClientRect();aud.currentTime=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))*END;userScroll=-1e9};
+prog.addEventListener('pointerdown',e=>{prog.classList.add('drag');prog.setPointerCapture(e.pointerId);seek(e)});
+prog.addEventListener('pointermove',e=>{if(prog.classList.contains('drag'))seek(e)});
+prog.addEventListener('pointerup',()=>prog.classList.remove('drag'));
+prog.addEventListener('keydown',e=>{if(e.key==='ArrowRight')aud.currentTime+=5;if(e.key==='ArrowLeft')aud.currentTime-=5});
+
+// corazones flotantes
+const cv=$('fx'),ctx=cv.getContext('2d');let parts=[];
+const fit=()=>{const r=devicePixelRatio||1;cv.width=innerWidth*r;cv.height=innerHeight*r;ctx.setTransform(r,0,0,r,0,0)};
+const ro=new ResizeObserver(fit);ro.observe(document.body);
+function heart(x,y,big){if(reduce)return;parts.push({x,y,vx:(Math.random()-.5)*(big?3:.6),vy:-(big?2.5+Math.random()*2:0.6+Math.random()*.8),s:big?10+Math.random()*10:6+Math.random()*8,a:1,r:(Math.random()-.5)*.6,c:Math.random()<.5?'#ff7b5c':'#ff5fa2'})}
+function drawHeart(p){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.globalAlpha=p.a;ctx.fillStyle=p.c;const s=p.s/16;ctx.scale(s,s);
+ ctx.beginPath();ctx.moveTo(0,6);ctx.bezierCurveTo(-14,-4,-6,-14,0,-6);ctx.bezierCurveTo(6,-14,14,-4,0,6);ctx.fill();ctx.restore()}
+$('like').addEventListener('click',e=>{const b=e.currentTarget,on=!b.classList.contains('on');b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);
+ b.querySelector('svg').setAttribute('fill',on?'currentColor':'none');b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');
+ if(on){const r=b.getBoundingClientRect();for(let i=0;i<18;i++)heart(r.left+r.width/2,r.top+r.height/2,true)}});
+
+const beats=[...document.querySelectorAll('.beats i')];
+let wasAway=false,lastLine=-2,lastSec=-1,lastBeat=-1,lastNote=-1;
+function frame(){
+ const t=aud.currentTime,playing=!aud.paused;
+ const pct=Math.min(100,t/END*100);$('done').style.width=pct+'%';$('knob').style.left=pct+'%';
+ $('cur').textContent=fmt(t);prog.setAttribute('aria-valuenow',Math.floor(t));
+ const k=secIdx(t),S=D.sections[k],sing=S.kind==='sing';
+ if(k!==lastSec){lastSec=k;
+  const au=AURA[S.name.includes('Brujita')||S.name.includes('noche')?'witch':S.kind]||AURA.talk;
+  document.documentElement.style.setProperty('--a1',au[0]);document.documentElement.style.setProperty('--a2',au[1]);
+  $('chip').textContent=sing?'Cantado':S.kind==='break'?'Pausa':'Hablado';$('chip').className='chip'+(sing?' sing':'');
+  $('pname').textContent=S.name.replace('♪ ','');
+  const N=D.sections[k+1],nx=$('nxname');nx.textContent=N?(N.kind==='sing'?'♪ ':'')+N.name.replace('♪ ','')+(N.kind==='sing'?' · se canta':' · hablado'):'Fin de la canción 💛';
+  nx.classList.remove('swap');void nx.offsetWidth;nx.classList.add('swap');
+ }
+ const N=D.sections[k+1],segEnd=N?N.t:END,left=segEnd-t,segLen=segEnd-S.t;
+ $('ringc').setAttribute('stroke-dashoffset',(100.5*(left/segLen)).toFixed(1));
+ const cd=$('cd');cd.textContent=N?'en '+fmt(left+.99):'';cd.className='cd'+(N&&N.kind==='sing'?' sing':'');
+ const bn=Math.floor(t/D.beat);
+ if(bn!==lastBeat){lastBeat=bn;const on=playing&&S.kind!=='break'&&t<END-4;beats.forEach((b,i)=>b.classList.toggle('on',on&&i===bn%4));
+  if(on&&sing&&bn%2===0)heart(Math.random()*innerWidth,innerHeight+10,false)}
+ let li=-1;for(let i=0;i<lines.length;i++){if(t>=lines[i].s&&t<lines[i].e){li=i;break}}
+ if(li!==lastLine){lastLine=li;
+  const ref=li>=0?li:lines.findIndex(L=>L.s>t);
+  P.forEach((p,i)=>{p.classList.toggle('cur',i===li);p.classList.toggle('past',ref>=0?i<ref:true);p.classList.toggle('far',ref>=0&&Math.abs(i-ref)>2);
+   if(i!==li)for(const w of p.children){w.className='w';w.style.removeProperty('--f')}});
+  const tgt=P[ref];
+  if(tgt&&performance.now()-userScroll>HOLD)ly.scrollTo({top:tgt.offsetTop-ly.clientHeight*.36,behavior:reduce?'auto':'smooth'});
+ }
+ if(li>=0){const sp=P[li].children,L=lines[li];
+  L.w.forEach((w,i)=>{const el=sp[i];if(!el)return;const q=Math.min(1,Math.max(0,(t-w.s)/(w.e-w.s)));
+   el.style.setProperty('--f',(q*100).toFixed(1)+'%');
+   const c=t>=w.s&&t<w.e;const want='w'+(c?' k':'')+(c&&L.sing?' hit':'');if(el.className!==want)el.className=want});
+ }
+ {const away=performance.now()-userScroll<HOLD;const el=P[lastLine>=0?lastLine:0];let off=false;
+  if(away&&el){const r=el.getBoundingClientRect(),q=ly.getBoundingClientRect();off=r.bottom<q.top+q.height*.15||r.top>q.bottom-q.height*.2}
+  resync.classList.toggle('show',off&&playing);
+  if(!away&&wasAway){toCurrent()}wasAway=away}
+ parts=parts.filter(p=>p.a>0.02&&p.y>-40);ctx.clearRect(0,0,innerWidth,innerHeight);
+ for(const p of parts){p.x+=p.vx+Math.sin(p.y/40)*.3;p.y+=p.vy;p.vy*=p.s>12?.985:1;p.a-=p.s>12?.012:.0035;drawHeart(p)}
+ requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+}
+</script>
+</body>
+</html>
